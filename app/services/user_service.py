@@ -1,5 +1,7 @@
+from fastapi import UploadFile
 from sqlalchemy.orm import Session
 from app.core.pagination import paginate
+from app.core.upload_file import deleteFile, uploadFile
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 
@@ -49,3 +51,19 @@ def delete_user(db: Session, id: int):
 
 def email_exists(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
+
+
+async def upload_avatar(db: Session, id: int, avatar: UploadFile):
+    db_user = get_user(db, id)
+    if not db_user:
+        return None
+
+    # delete old file
+    if db_user.avatar:
+        deleteFile(db_user.avatar)
+
+    db_user.avatar = await uploadFile(avatar)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user

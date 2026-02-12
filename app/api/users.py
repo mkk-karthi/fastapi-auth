@@ -27,7 +27,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
         ErrorResponse,
     ],
 )
-async def get_users(
+def get_users(
     page: int = 1,
     size: int = 10,
     db: Session = Depends(get_db),
@@ -87,3 +87,21 @@ def delete_user(id: int, db: Session = Depends(get_db)):
         return error_response("User not found", 404)
     else:
         return success_response(message="User deleted successfully")
+
+
+@router.post("/upload-avatar/{id}", response_model=CommonResponse)
+async def uploadAvatar(
+    id: int, avatar: UploadFile = File(...), db: Session = Depends(get_db)
+):
+
+    if not avatar or not avatar.filename:
+        return error_response("Avatar is required", 422)
+
+    uploaded = await user_service.upload_avatar(db, id, avatar)
+    if not uploaded:
+        return error_response("File not uploaded", 404)
+    else:
+        return success_response(
+            data=jsonable_encoder(UserResponse.model_validate(uploaded)),
+            message="File uploaded",
+        )

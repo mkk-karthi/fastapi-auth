@@ -1,10 +1,5 @@
 import re
-from fastapi import Depends
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
-from sqlalchemy.orm import Session
-
-from app.core.database import get_db
-from app.models.user import User
 
 password_pattern = r"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,16}$"
 
@@ -51,6 +46,7 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: EmailStr
+    avatar: str | None
 
     class Config:
         from_attributes = True  # SQLAlchemy → Pydantic
