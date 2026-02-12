@@ -1,0 +1,23 @@
+[project]
+name = "fastapi-auth"
+version = "0.1.0"
+description = ""
+authors = [
+]
+readme = "README.md"
+requires-python = ">=3.9,<4.0"
+dependencies = [
+    "fastapi[standard] (>=0.128.2,<0.129.0)",
+    "loguru (>=0.7.3,<0.8.0)",
+    "slowapi (>=0.1.9,<0.2.0)",
+    "ruff (>=0.15.0,<0.16.0)",
+    "sqlalchemy (>=2.0.46,<3.0.0)",
+    "pymysql (>=1.1.2,<2.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "fastapi_auth", from = "app"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
