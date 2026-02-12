@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
+from app.core.pagination import paginate
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreate, UserResponse, UserUpdate
 
 
 def create_user(db: Session, user: UserCreate):
@@ -11,12 +12,14 @@ def create_user(db: Session, user: UserCreate):
     return new_user
 
 
-def get_users(db: Session):
-    db.query(User).all()
+def get_users(db: Session, page: int = 1, size: int = 10):
+    query = db.query(User)
+
+    return paginate(query, UserResponse, page, size)
 
 
 def get_user(db: Session, id: int):
-    db.query(User).filter(User.id == id).first()
+    return db.query(User).filter(User.id == id).first()
 
 
 def update_user(db: Session, id: int, user: UserUpdate):
@@ -24,8 +27,11 @@ def update_user(db: Session, id: int, user: UserUpdate):
     if not db_user:
         return None
 
-    db_user.name = user.name
-    db_user.email = user.email
+    if user.name:
+        db_user.name = user.name
+    if user.password:
+        db_user.password = user.password
+
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -39,3 +45,7 @@ def delete_user(db: Session, id: int):
     db.delete(db_user)
     db.commit()
     return db_user
+
+
+def email_exists(db: Session, email: str):
+    return db.query(User).filter(User.email == email).first()

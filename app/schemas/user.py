@@ -1,21 +1,56 @@
-from pydantic import BaseModel, EmailStr, Field
+import re
+from fastapi import Depends
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.models.user import User
+
+password_pattern = r"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,16}$"
 
 
-class UserBase(BaseModel):
-    name: str = Field(...,min_length=3,max_length=50)
+def validate_password_strength(v: str):
+    if not re.match(password_pattern, v):
+        raise ValueError(
+            "Password must be 8-16 chars with uppercase, lowercase, number, and special character"
+        )
+    return v
+
+
+class UserCreate(BaseModel):
+    name: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
 
+    password: str = Field(..., min_length=8)
 
-class UserCreate(UserBase):
-    password: str = Field(...,min_length=8)
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str):
+        return validate_password_strength(v)
+
+    confirm_password: str = Field(..., min_length=8)
+
+    @model_validator(mode="after")
+    def check_passwords_match(self):
+        if self.password != self.confirm_password:
+            raise ValueError("Passwords do not match")
+        return self
 
 
-class UserUpdate(UserBase):
-    password: str = Field(...,min_length=8)
+class UserUpdate(BaseModel):
+    name: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(None, min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str):
+        return validate_password_strength(v)
 
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: int
+    name: str
+    email: EmailStr
 
     class Config:
         from_attributes = True  # SQLAlchemy → Pydantic
