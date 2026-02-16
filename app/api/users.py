@@ -1,9 +1,10 @@
 from typing import Union
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.mail import MailSchema, mailSend
 from app.core.response import error_response, success_response
 from app.schemas.response import (
     CommonResponse,
@@ -41,7 +42,9 @@ def get_users(
 
 
 @router.post("/", response_model=CommonResponse)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
+def create_user(
+    user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
 
     if user_service.email_exists(db, user.email):
         return error_response("Email already exist", 404)
@@ -50,6 +53,14 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     if not created:
         return error_response("User not created", 404)
     else:
+        message = MailSchema(
+            recipient=created.email,
+            subject="Register Successful - FastAPI",
+            body=f"<p>Hai <strong>{created.name}</strong>,</p><p style='color:blue; background: yellow;'>Welcome to fastAPI.</p>",
+        )
+
+        background_tasks.add_task(mailSend, message)
+
         return success_response(
             data=jsonable_encoder(UserResponse.model_validate(created)),
             message="User created",
@@ -91,7 +102,10 @@ def delete_user(id: int, db: Session = Depends(get_db)):
 
 @router.post("/upload-avatar/{id}", response_model=CommonResponse)
 async def uploadAvatar(
-    id: int, avatar: UploadFile = File(...), db: Session = Depends(get_db)
+    id: int,
+    avatar: UploadFile,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
 ):
 
     if not avatar or not avatar.filename:
@@ -101,6 +115,15 @@ async def uploadAvatar(
     if not uploaded:
         return error_response("File not uploaded", 404)
     else:
+        message = MailSchema(
+            recipient=uploaded.email,
+            subject="Avatar Updated - FastAPI",
+            body=f"<p>Hai <strong>{uploaded.name}</strong>,</p><p style='color:blue; background: yellow;'>Avatar update sucessfully.</p>",
+            attachment=uploaded.avatar,
+        )
+
+        background_tasks.add_task(mailSend, message)
+
         return success_response(
             data=jsonable_encoder(UserResponse.model_validate(uploaded)),
             message="File uploaded",

@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     DB_USERNAME: str = "root"
     DB_PASSWORD: str = "password"
 
+    MAIL_HOST: str = "smtp.gmail.com"
+    MAIL_PORT: int = 587
+    MAIL_USERNAME: str = "your_email@gmail.com"
+    MAIL_PASSWORD: str = "your_app_password"
+    MAIL_STARTTLS: bool = True
+    MAIL_FROM: str = "your_email@gmail.com"
+
     LOGGER_ROTATION: str = "10 MB"
 
     model_config = SettingsConfigDict(
