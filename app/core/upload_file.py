@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from fastapi import UploadFile, HTTPException
 
@@ -17,7 +18,8 @@ async def uploadFile(file: UploadFile) -> str:
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(400, "File too large")
 
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    file_path = os.path.join(UPLOAD_DIR, f"{timestamp}_{file.filename}")
 
     with open(file_path, "wb") as f:
         f.write(contents)
