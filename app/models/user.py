@@ -12,5 +12,6 @@ class User(Base):
     email = Column(String(100), unique=True, index=True)
     password = Column(String(100), nullable=False)
     avatar = Column(String(250))
+    mail_verified_at = Column(DateTime)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.now)

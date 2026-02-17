@@ -3,8 +3,11 @@ from fastapi import APIRouter, BackgroundTasks, Depends, UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
+from app.core.helper import generate_otp
 from app.core.mail import MailSchema, mailSend
+from app.core.redis import redisCache
 from app.core.response import error_response, success_response
 from app.schemas.response import (
     CommonResponse,
@@ -13,7 +16,7 @@ from app.schemas.response import (
     SuccessResponse,
     ValidationErrorResponse,
 )
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.user import MailVerifyOTP, UserCreate, UserResponse, UserUpdate
 from app.services import user_service
 
 
@@ -42,7 +45,7 @@ def get_users(
 
 
 @router.post("/", response_model=CommonResponse)
-def create_user(
+async def create_user(
     user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
 ):
 
@@ -53,10 +56,12 @@ def create_user(
     if not created:
         return error_response("User not created", 404)
     else:
+        otp = generate_otp()
+        await redisCache.set(created.email, otp, settings.OTP_EXPIRY)
         message = MailSchema(
             recipient=created.email,
             subject="Register Successful - FastAPI",
-            body=f"<p>Hai <strong>{created.name}</strong>,</p><p style='color:blue; background: yellow;'>Welcome to fastAPI.</p>",
+            body=f"<p>Hai <strong>{created.name}</strong>,</p><p style='color:blue; background: yellow;'>Welcome to fastAPI. Your OTP is <code>{otp}</code>.</p>",
         )
 
         background_tasks.add_task(mailSend, message)
@@ -128,3 +133,19 @@ async def uploadAvatar(
             data=jsonable_encoder(UserResponse.model_validate(uploaded)),
             message="File uploaded",
         )
+
+
+@router.post("/verify-otp", response_model=CommonResponse)
+async def verifyOTP(user: MailVerifyOTP, db: Session = Depends(get_db)):
+    otp = await redisCache.get(user.email)
+    if user.otp == otp:
+        updated = user_service.update_verified_user(db, user.email)
+
+        if not updated:
+            return error_response("Mail not verified", 400)
+        else:
+            await redisCache.delete(user.email)
+            return success_response(message="Mail verified")
+
+    else:
+        return error_response("Mail not verified", 400)

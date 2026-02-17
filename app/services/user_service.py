@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 from app.core.pagination import paginate
@@ -44,6 +45,10 @@ def delete_user(db: Session, id: int):
     if not db_user:
         return None
 
+    # delete avatar
+    if db_user.avatar:
+        deleteFile(db_user.avatar)
+
     db.delete(db_user)
     db.commit()
     return db_user
@@ -63,6 +68,18 @@ async def upload_avatar(db: Session, id: int, avatar: UploadFile):
         deleteFile(db_user.avatar)
 
     db_user.avatar = await uploadFile(avatar)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+def update_verified_user(db: Session, email: str):
+    db_user = db.query(User).filter(User.email == email).first()
+    if not db_user:
+        return None
+
+    db_user.mail_verified_at = datetime.now()
 
     db.commit()
     db.refresh(db_user)

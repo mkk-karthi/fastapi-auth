@@ -1,6 +1,8 @@
 import re
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
+from app.core.config import settings
+
 password_pattern = r"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,16}$"
 
 
@@ -50,3 +52,13 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True  # SQLAlchemy → Pydantic
+
+
+class MailVerifyOTP(BaseModel):
+    email: EmailStr
+    otp: str = Field(
+        ...,
+        min_length=settings.OTP_LENGTH,
+        max_length=settings.OTP_LENGTH,
+        pattern=r"^\d+$",
+    )

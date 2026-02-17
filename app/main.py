@@ -20,7 +20,7 @@ app = FastAPI(
     title="FastAPI Starter Project",
     description="FastAPI Starter Project",
     version="1.0",
-    docs_url="/api/documentation/",
+    docs_url="/api/docs/",
     openapi_url="/api/openapi.json",
 )
 

@@ -24,7 +24,13 @@ class Settings(BaseSettings):
     MAIL_STARTTLS: bool = True
     MAIL_FROM: str = "your_email@gmail.com"
 
+    REDIS_HOST: str = "127.0.0.1"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str | None = None
+
     LOGGER_ROTATION: str = "10 MB"
+    OTP_LENGTH: int = 6
+    OTP_EXPIRY: int = 10
 
     model_config = SettingsConfigDict(
         env_file=".env", env_ignore_empty=True, env_file_encoding="utf-8"
@@ -34,3 +40,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+__all__ = ["Settings", "settings"]
