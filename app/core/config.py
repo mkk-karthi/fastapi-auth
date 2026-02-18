@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     OTP_LENGTH: int = 6
     OTP_EXPIRY: int = 10
 
+    UPLOAD_DIR: str = "uploads"
+    MAX_FILE_SIZE: int = 5
+    ALLOWED_TYPES: list = ["image/jpeg", "image/png"]
+
     model_config = SettingsConfigDict(
         env_file=".env", env_ignore_empty=True, env_file_encoding="utf-8"
     )

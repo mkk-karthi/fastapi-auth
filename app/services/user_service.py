@@ -1,8 +1,7 @@
 from datetime import datetime
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
-from app.core.pagination import paginate
-from app.core.upload_file import deleteFile, uploadFile
+from app.core.helper import deleteFile, pagination, uploadFile
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 
@@ -18,7 +17,7 @@ def create_user(db: Session, user: UserCreate):
 def get_users(db: Session, page: int = 1, size: int = 10):
     query = db.query(User)
 
-    return paginate(query, UserResponse, page, size)
+    return pagination(query, UserResponse, page, size)
 
 
 def get_user(db: Session, id: int):
