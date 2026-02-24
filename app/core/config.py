@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     Settings class to load configuration from environment variables and .env file.
     """
 
+    APP_NAME: str = "FastAPI"
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     RELOAD: bool = False
@@ -35,6 +36,9 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE: int = 5
     ALLOWED_TYPES: list = ["image/jpeg", "image/png"]
+    ACCESS_TOKEN_EXPIRY: int = 10
+
+    SECRET_KEY: str = "secret-key"
 
     model_config = SettingsConfigDict(
         env_file=".env", env_ignore_empty=True, env_file_encoding="utf-8"

@@ -62,5 +62,5 @@ def deleteFile(path: str):
         os.unlink(path)
 
 
-def generate_otp(length: int = settings.OTP_LENGTH) -> str:
+def generateOtp(length: int = settings.OTP_LENGTH) -> str:
     return "".join(random.choices(string.digits, k=length))
