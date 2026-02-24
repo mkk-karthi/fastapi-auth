@@ -19,12 +19,16 @@ def verifyPassword(password: str, hash_password: str):
 
 
 def createAccessToken(data: Any):
-    expiry = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRY)
+    expiry = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE
+    )
     token = jwt.encode(
-        {"exp": expiry, "sub": str(data)}, settings.SECRET_KEY, algorithm="HS256"
+        {"exp": expiry, "sub": str(data)},
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
     )
     return token
 
 
 def verifyToken(token: str):
-    return jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])

@@ -40,7 +40,7 @@ def mailSend(mail: MailSchema) -> bool:
 
         # Send mail
         with smtplib.SMTP(settings.MAIL_HOST, settings.MAIL_PORT) as server:
-            if settings.MAIL_STARTTLS:
+            if settings.MAIL_TLS:
                 server.starttls()
 
             server.login(settings.MAIL_FROM, settings.MAIL_PASSWORD)

@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     MAIL_PORT: int = 587
     MAIL_USERNAME: str = "your_email@gmail.com"
     MAIL_PASSWORD: str = "your_app_password"
-    MAIL_STARTTLS: bool = True
+    MAIL_TLS: bool = True
     MAIL_FROM: str = "your_email@gmail.com"
 
     REDIS_HOST: str = "127.0.0.1"
@@ -31,14 +31,15 @@ class Settings(BaseSettings):
 
     LOGGER_ROTATION: str = "10 MB"
     OTP_LENGTH: int = 6
-    OTP_EXPIRY: int = 10
+    OTP_EXPIRE: int = 10
 
     UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE: int = 5
     ALLOWED_TYPES: list = ["image/jpeg", "image/png"]
-    ACCESS_TOKEN_EXPIRY: int = 10
 
     SECRET_KEY: str = "secret-key"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE: int = 10
 
     model_config = SettingsConfigDict(
         env_file=".env", env_ignore_empty=True, env_file_encoding="utf-8"

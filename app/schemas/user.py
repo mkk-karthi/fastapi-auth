@@ -1,5 +1,5 @@
 import re
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.core.config import settings
 
@@ -25,23 +25,10 @@ class UserCreate(BaseModel):
     def validate_password(cls, v: str):
         return validate_password_strength(v)
 
-    confirm_password: str = Field(..., min_length=8)
-
-    @model_validator(mode="after")
-    def check_passwords_match(self):
-        if self.password != self.confirm_password:
-            raise ValueError("Passwords do not match")
-        return self
-
 
 class UserUpdate(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     password: str = Field(None, min_length=8)
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v: str):
-        return validate_password_strength(v)
 
 
 class UserResponse(BaseModel):
@@ -53,12 +40,3 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True  # SQLAlchemy → Pydantic
 
-
-class MailVerifyOTP(BaseModel):
-    email: EmailStr
-    otp: str = Field(
-        ...,
-        min_length=settings.OTP_LENGTH,
-        max_length=settings.OTP_LENGTH,
-        pattern=r"^\d+$",
-    )

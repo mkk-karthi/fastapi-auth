@@ -21,6 +21,7 @@ app = FastAPI(
     description="FastAPI Starter Project",
     version="1.0",
     docs_url="/api/docs/",
+    redoc_url="/api/redoc/",
     openapi_url="/api/openapi.json",
 )
 
@@ -54,7 +55,6 @@ app.add_middleware(SlowAPIMiddleware)
 
 
 @app.get("/")
-@limiter.limit("2/minute")
 async def read_root(request: Request):
     logger.info("Works done")
     return {"message": "Hello, FastAPI!"}
