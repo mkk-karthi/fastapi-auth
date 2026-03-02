@@ -1,5 +1,6 @@
 import re
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic_core import PydanticCustomError
 
 from app.core.config import settings
 
@@ -16,19 +17,22 @@ def validate_password_strength(v: str):
 
 class PasswordSchema(BaseModel):
     password: str = Field(..., min_length=8)
+    confirm_password: str = Field(..., min_length=8)
 
     @field_validator("password")
     @classmethod
     def validatePassword(cls, v: str):
         return validate_password_strength(v)
 
-    confirm_password: str = Field(..., min_length=8)
+    @field_validator("confirm_password")
+    @classmethod
+    def passwords_match(cls, v, info):
+        password = info.data.get("password")
 
-    @model_validator(mode="after")
-    def check_passwords_match(self):
-        if self.password != self.confirm_password:
+        if password and v != password:
             raise ValueError("Passwords do not match")
-        return self
+
+        return v
 
 
 class LoginSchema(BaseModel):

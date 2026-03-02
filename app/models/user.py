@@ -7,9 +7,9 @@ from app.core.database import Base
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    email = Column(String(100), unique=True, index=True)
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, index=True)
+    email = Column(String(100), unique=True)
     password = Column(String(100), nullable=False)
     avatar = Column(String(250))
     mail_verified_at = Column(DateTime)

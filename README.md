@@ -32,7 +32,7 @@ A production-ready FastAPI authentication scaffolding project with user manageme
 * Poetry (Dependency Management)
 * Pydantic (Validation)
 * JWT (Authentication)
-* SMTP / FastAPI-Mail (Email Service)
+* SMTP (Email Service)
 
 ---
 

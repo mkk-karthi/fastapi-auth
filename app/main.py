@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+import time
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,14 +9,34 @@ from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api import router
+from app.core.database import Base, Engine
 from app.core.logger import configure_logger
+from app.core.redis import RedisCache
 from app.core.response import (
     http_exception_handler,
     rate_limit_exceeded_handler,
     validation_exception_handler,
 )
+
+redis_cache = RedisCache()
+
+
+# redis connection
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # STARTUP
+    await redis_cache.connect()
+    app.state.redis = redis_cache
+    logger.info("Redis connected")
+
+    yield
+
+    # SHUTDOWN
+    await redis_cache.close()
+
 
 app = FastAPI(
     title="FastAPI Starter Project",
@@ -23,6 +45,7 @@ app = FastAPI(
     docs_url="/api/docs/",
     redoc_url="/api/redoc/",
     openapi_url="/api/openapi.json",
+    lifespan=lifespan,
 )
 
 configure_logger()
@@ -47,6 +70,7 @@ app.state.limiter = limiter
 # handle error response
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, http_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
@@ -54,9 +78,33 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 
+# Add Log for request and response
+class LoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        start_time = time.time()
+
+        # Process the request
+        response = await call_next(request)
+
+        # Calculate the duration
+        process_time = time.time() - start_time
+
+        # Log summary details for immediate visibility
+        logger.info(
+            f"Request: {request.method} {request.url.path} from {request.client.host} | "
+            f"Status: {response.status_code} | Duration: {process_time:.4f}s"
+        )
+
+        return response
+
+
+app.add_middleware(LoggingMiddleware)
+Base.metadata.create_all(bind=Engine)
+
+
 @app.get("/")
 async def read_root(request: Request):
-    logger.info("Works done")
     return {"message": "Hello, FastAPI!"}
+
 
 app.include_router(router.router)

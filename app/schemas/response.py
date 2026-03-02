@@ -1,18 +1,17 @@
-from typing import Any, Dict, Generic, List, TypeVar, Union
+from typing import Dict, Generic, List, TypeVar, Union
 from pydantic import BaseModel
-from pydantic.generics import GenericModel
 
 T = TypeVar("T")
 
 
-class PaginationMeta(GenericModel, Generic[T]):
+class PaginationMeta(BaseModel, Generic[T]):
     items: List[T]
     page: int
     size: int
     total: int
 
 
-class SuccessResponse(GenericModel, Generic[T]):
+class SuccessResponse(BaseModel, Generic[T]):
     code: int = 200
     message: str = "Success"
     data: T = None

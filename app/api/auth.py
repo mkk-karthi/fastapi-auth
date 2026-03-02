@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Body, Request
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import EmailStr
@@ -7,10 +7,10 @@ from slowapi.util import get_remote_address
 
 from app.core.auth import createAccessToken, verifyPassword
 from app.core.config import settings
-from app.core.database import GetDB
+from app.core.database import SessionDep
 from app.core.helper import generateOtp
 from app.core.mail import MailSchema, mailSend
-from app.core.redis import redisCache
+from app.core.redis import RedisCacheDep
 from app.core.response import error_response, success_response
 from app.debs.auth import CurrentUser
 from app.schemas.auth import (
@@ -32,18 +32,22 @@ limiter = Limiter(key_func=get_remote_address)
 @router.post("/signin", response_model=CommonResponse)
 @limiter.limit("5/minute")
 async def signin(
-    request: Request, user: SigninSchema, background_tasks: BackgroundTasks, db: GetDB
+    request: Request,
+    user: SigninSchema,
+    background_tasks: BackgroundTasks,
+    db: SessionDep,
+    RedisCache=RedisCacheDep,
+    otp: str = Depends(generateOtp),
 ):
 
     if user_service.email_exists(db, user.email):
-        return error_response("Email already exist", 404)
+        return error_response("Email already exist", 400)
 
     created = user_service.create_user(db, user)
     if not created:
         return error_response("User not created", 404)
     else:
-        otp = generateOtp()
-        await redisCache.set(created.email, otp, settings.OTP_EXPIRE)
+        await RedisCache.set(created.email, otp, settings.OTP_EXPIRE)
         message = MailSchema(
             recipient=created.email,
             subject="Register Successful - FastAPI",
@@ -60,7 +64,7 @@ async def signin(
 
 @router.post("/login", response_model=CommonResponse)
 @limiter.limit("5/minute")
-async def login(request: Request, req: LoginSchema, db: GetDB):
+async def login(request: Request, req: LoginSchema, db: SessionDep):
     user = user_service.get_user_by_mail(db, req.email)
     if not user:
         return error_response("Email & password incorrect")
@@ -78,15 +82,15 @@ async def login(request: Request, req: LoginSchema, db: GetDB):
 
 
 @router.post("/verify-otp", response_model=CommonResponse)
-async def verifyOTP(req: MailVerifyOTP, db: GetDB):
-    otp = await redisCache.get(req.email)
+async def verifyOTP(req: MailVerifyOTP, db: SessionDep, RedisCache=RedisCacheDep):
+    otp = await RedisCache.get(req.email)
     if req.otp == otp:
         updated = user_service.update_verified_user(db, req.email)
 
         if not updated:
             return error_response("Mail not verified", 400)
         else:
-            await redisCache.delete(req.email)
+            await RedisCache.delete(req.email)
             return success_response(message="Mail verified")
 
     else:
@@ -102,7 +106,9 @@ def get_current_user(current_user: CurrentUser):
 
 
 @router.post("/change-password", response_model=CommonResponse)
-def change_password(req: ChangePasswordSchema, current_user: CurrentUser, db: GetDB):
+def change_password(
+    req: ChangePasswordSchema, current_user: CurrentUser, db: SessionDep
+):
     user = user_service.get_user_by_mail(db, current_user["email"])
     if verifyPassword(req.old_password, user.password):
         user_service.update_user(
@@ -119,13 +125,14 @@ def change_password(req: ChangePasswordSchema, current_user: CurrentUser, db: Ge
 async def forgot_password(
     request: Request,
     background_tasks: BackgroundTasks,
-    db: GetDB,
+    db: SessionDep,
     email: EmailStr = Body(..., embed=True),
+    RedisCache=RedisCacheDep,
+    otp: str = Depends(generateOtp),
 ):
     user = user_service.get_user_by_mail(db, email)
     if user:
-        otp = generateOtp()
-        await redisCache.set(user.email, otp, settings.OTP_EXPIRE)
+        await RedisCache.set(user.email, otp, settings.OTP_EXPIRE)
         message = MailSchema(
             recipient=user.email,
             subject="Forgot your password? - FastAPI",
@@ -138,8 +145,10 @@ async def forgot_password(
 
 
 @router.post("/reset-password", response_model=CommonResponse)
-async def reset_password(req: ResetPasswordSchema, db: GetDB):
-    otp = await redisCache.get(req.email)
+async def reset_password(
+    req: ResetPasswordSchema, db: SessionDep, RedisCache=RedisCacheDep
+):
+    otp = await RedisCache.get(req.email)
     if req.otp == otp:
 
         user = user_service.get_user_by_mail(db, req.email)
@@ -147,7 +156,7 @@ async def reset_password(req: ResetPasswordSchema, db: GetDB):
             user_service.update_user(
                 db, user.id, UserUpdate(name=user.name, password=req.password)
             )
-            await redisCache.delete(req.email)
+            await RedisCache.delete(req.email)
             return success_response(message="Password updated")
 
         else:

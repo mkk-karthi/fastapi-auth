@@ -18,13 +18,11 @@ def create_user(db: Session, user: UserCreate):
 
 
 def get_users(db: Session, page: int = 1, size: int = 10):
-    query = db.query(User)
-
-    return pagination(query, UserResponse, page, size)
+    return pagination(db, User, page, size, UserResponse)
 
 
 def get_user(db: Session, id: int):
-    return db.query(User).filter(User.id == id).first()
+    return db.get(User, id)
 
 
 def update_user(db: Session, id: int, user: UserUpdate):

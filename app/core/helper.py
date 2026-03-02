@@ -6,19 +6,26 @@ from typing import Type, TypeVar
 from fastapi import HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from sqlalchemy.orm import Query
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import Base
 
 SchemaType = TypeVar("SchemaType", bound=BaseModel)
 
 
 def pagination(
-    query: Query, schema: Type[SchemaType] = None, page: int = 1, size: int = 10
+    db: Session,
+    model: Base,
+    page: int = 1,
+    size: int = 10,
+    schema: Type[SchemaType] = None,
 ):
-    total = query.count()
+    total = db.scalar(select(func.count(model.id)))
 
-    items = query.offset((page - 1) * size).limit(size).all()
+    query = select(model).offset((page - 1) * size).limit(size)
+    items = db.execute(query).scalars().all()
 
     if schema:
         items = [schema.model_validate(item) for item in items]

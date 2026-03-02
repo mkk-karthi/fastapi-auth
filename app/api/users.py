@@ -2,7 +2,7 @@ from typing import Union
 from fastapi import APIRouter, UploadFile
 from fastapi.encoders import jsonable_encoder
 
-from app.core.database import GetDB
+from app.core.database import SessionDep
 from app.core.response import error_response, success_response
 from app.schemas.response import (
     CommonResponse,
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
     ],
 )
 def get_users(
-    db: GetDB,
+    db: SessionDep,
     page: int = 1,
     size: int = 10,
 ):
@@ -40,10 +40,10 @@ def get_users(
 
 
 @router.post("/", response_model=CommonResponse)
-async def create_user(user: UserCreate, db: GetDB):
+async def create_user(user: UserCreate, db: SessionDep):
 
     if user_service.email_exists(db, user.email):
-        return error_response("Email already exist", 404)
+        return error_response("Email already exist", 400)
 
     created = user_service.create_user(db, user)
     if not created:
@@ -56,7 +56,7 @@ async def create_user(user: UserCreate, db: GetDB):
 
 
 @router.put("/{id}", response_model=CommonResponse)
-def update_user(id: int, user: UserUpdate, db: GetDB):
+def update_user(id: int, user: UserUpdate, db: SessionDep):
     updated = user_service.update_user(db, id, user)
     if not updated:
         return error_response("User not found", 404)
@@ -68,7 +68,7 @@ def update_user(id: int, user: UserUpdate, db: GetDB):
 
 
 @router.get("/{id}", response_model=CommonResponse)
-def get_user(id: int, db: GetDB):
+def get_user(id: int, db: SessionDep):
     user = user_service.get_user(db, id)
     if not user:
         return error_response("User not found", 404)
@@ -80,7 +80,7 @@ def get_user(id: int, db: GetDB):
 
 
 @router.delete("/{id}", response_model=CommonResponse)
-def delete_user(id: int, db: GetDB):
+def delete_user(id: int, db: SessionDep):
     deleted = user_service.delete_user(db, id)
     if not deleted:
         return error_response("User not found", 404)
@@ -92,7 +92,7 @@ def delete_user(id: int, db: GetDB):
 async def uploadAvatar(
     id: int,
     avatar: UploadFile,
-    db: GetDB,
+    db: SessionDep,
 ):
 
     if not avatar or not avatar.filename:

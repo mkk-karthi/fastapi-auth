@@ -4,9 +4,8 @@ from app.core.auth import verifyToken
 from fastapi import Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
 
-from app.core.database import GetDB, get_db
+from app.core.database import SessionDep
 from app.models.user import User
 from app.schemas.user import UserResponse
 from app.services import user_service
@@ -14,7 +13,7 @@ from app.services import user_service
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
-def get_current_user(db: GetDB, token: str = Depends(oauth2_scheme)):
+def get_current_user(db: SessionDep, token: str = Depends(oauth2_scheme)):
     try:
         if not token:
             raise HTTPException(status_code=401, detail="Unauthorised")
