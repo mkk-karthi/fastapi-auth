@@ -1,5 +1,8 @@
+import os
 from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+ENV_FILE = ".env.test" if os.getenv("ENVIRONMENT") == "test" else ".env"
 
 
 class Settings(BaseSettings):
@@ -40,12 +43,14 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE: int = 10
+    MAX_RATELIMIT: str = "100/minute"
+    AUTH_MAX_RATELIMIT: str = "5/minute"
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_ignore_empty=True, env_file_encoding="utf-8"
+        env_file=ENV_FILE, env_ignore_empty=True, env_file_encoding="utf-8"
     )
 
-    ENVIRONMENT: Literal["local", "staging", "production"] = "local"
+    ENVIRONMENT: Literal["development", "test", "production"] = "development"
 
 
 settings = Settings()

@@ -17,9 +17,45 @@ dependencies = [
     "alembic (>=1.18.4,<2.0.0)",
     "redis (>=7.1.1,<8.0.0)",
     "pyjwt (>=2.11.0,<3.0.0)",
-    "pwdlib[bcrypt] (>=0.3.0,<0.4.0)"
+    "pwdlib[bcrypt] (>=0.3.0,<0.4.0)",
 ]
+
+[tool.poetry]
+name = "fastapi-auth"
+version = "0.1.0"
+description = ""
+authors = ["you"]
+
+packages = [{ include = "app" }]
+
+[tool.poetry.scripts]
+dev = "app.server:main"
+test = "pytest:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)",
+    "pytest-cov (>=7.0.0,<8.0.0)"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["app/tests"]
+addopts = "--cov=app --cov-report=html --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = [
+    '*__init__.py',
+    'app/schemas/*',
+    "app/tests/*",
+    "app/server.py",
+]
+
+[tool.coverage.report]
+fail_under = 80 
+show_missing = true

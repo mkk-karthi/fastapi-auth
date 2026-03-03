@@ -18,6 +18,7 @@ A production-ready FastAPI authentication scaffolding project with user manageme
 * 📊 Structured Logging with Loguru
 * 🧩 Modular and Scalable Project Structure
 * 📑 Standardized API Responses & Validation Schemas
+* Unit testing with coverage (pytest)
 
 ---
 
@@ -33,6 +34,7 @@ A production-ready FastAPI authentication scaffolding project with user manageme
 * Pydantic (Validation)
 * JWT (Authentication)
 * SMTP (Email Service)
+* pytest (Testing)
 
 ---
 
@@ -151,13 +153,27 @@ poetry run alembic upgrade head
 ## 🚀 Running the Application
 
 ```bash
-poetry run python -m app.server
+poetry run dev
 ```
 
 API Docs:
 
 * Swagger UI: http://127.0.0.1:8000/api/docs
 * ReDoc: http://127.0.0.1:8000/api/redoc
+
+---
+
+## 🧪 Testing (Pytest)
+
+### Run test
+```bash
+poetry run test -v
+```
+
+### Create Coverage
+```bash
+poetry run test --cov
+```
 
 ---
 

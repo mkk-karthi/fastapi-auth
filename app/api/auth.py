@@ -30,7 +30,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/signin", response_model=CommonResponse)
-@limiter.limit("5/minute")
+@limiter.limit(settings.AUTH_MAX_RATELIMIT)
 async def signin(
     request: Request,
     user: SigninSchema,
@@ -63,7 +63,7 @@ async def signin(
 
 
 @router.post("/login", response_model=CommonResponse)
-@limiter.limit("5/minute")
+@limiter.limit(settings.AUTH_MAX_RATELIMIT)
 async def login(request: Request, req: LoginSchema, db: SessionDep):
     user = user_service.get_user_by_mail(db, req.email)
     if not user:
@@ -110,7 +110,12 @@ def change_password(
     req: ChangePasswordSchema, current_user: CurrentUser, db: SessionDep
 ):
     user = user_service.get_user_by_mail(db, current_user["email"])
+
     if verifyPassword(req.old_password, user.password):
+        # check new password is currently used
+        if verifyPassword(req.password, user.password):
+            return error_response("Password has been previously used")
+
         user_service.update_user(
             db, current_user["id"], UserUpdate(name=user.name, password=req.password)
         )
@@ -121,7 +126,7 @@ def change_password(
 
 
 @router.post("/forgot-password", response_model=CommonResponse)
-@limiter.limit("5/minute")
+@limiter.limit(settings.AUTH_MAX_RATELIMIT)
 async def forgot_password(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -148,11 +153,15 @@ async def forgot_password(
 async def reset_password(
     req: ResetPasswordSchema, db: SessionDep, RedisCache=RedisCacheDep
 ):
-    otp = await RedisCache.get(req.email)
-    if req.otp == otp:
+    user = user_service.get_user_by_mail(db, req.email)
+    if user:
 
-        user = user_service.get_user_by_mail(db, req.email)
-        if user:
+        otp = await RedisCache.get(req.email)
+        if req.otp == otp:
+            # check new password is currently used
+            if verifyPassword(req.password, user.password):
+                return error_response("Password has been previously used")
+
             user_service.update_user(
                 db, user.id, UserUpdate(name=user.name, password=req.password)
             )

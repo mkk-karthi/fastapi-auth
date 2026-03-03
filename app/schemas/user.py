@@ -1,7 +1,5 @@
 import re
-from pydantic import BaseModel, EmailStr, Field, field_validator
-
-from app.core.config import settings
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 password_pattern = r"^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,16}$"
 
@@ -37,6 +35,5 @@ class UserResponse(BaseModel):
     email: EmailStr
     avatar: str | None
 
-    class Config:
-        from_attributes = True  # SQLAlchemy → Pydantic
+    model_config = ConfigDict(from_attributes=True)     # SQLAlchemy → Pydantic
 

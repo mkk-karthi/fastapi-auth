@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api import router
+from app.core.config import settings
 from app.core.database import Base, Engine
 from app.core.logger import configure_logger
 from app.core.redis import RedisCache
@@ -63,7 +64,7 @@ app.add_middleware(
 )
 
 # initialize limiter
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+limiter = Limiter(key_func=get_remote_address, default_limits=[settings.MAX_RATELIMIT])
 app.state.limiter = limiter
 
 

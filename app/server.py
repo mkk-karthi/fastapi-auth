@@ -10,7 +10,8 @@ def main() -> None:
         workers=1,
         host=settings.HOST,
         port=settings.PORT,
-        reload=settings.RELOAD
+        reload=settings.RELOAD,
+        reload_dirs=["app"]
     )
 
 
