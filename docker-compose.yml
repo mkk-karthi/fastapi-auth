@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: fastapi-auth
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      DB_HOST=mysql
+      DB_PORT=3306
+      DB_DATABASE=fastapi_db
+      DB_USERNAME=root
+      DB_PASSWORD=password
+      REDIS_HOST=redis
+      REDIS_PORT=6379
+      REDIS_PASSWORD=
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: fastapi-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fastapi_db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: fastapi-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mysql_data:
+  redis_data:

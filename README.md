@@ -6,18 +6,18 @@ A production-ready FastAPI authentication scaffolding project with user manageme
 
 ## 📌 Features
 
-* 📦 Poetry for Dependency Management
-* 👤 User CRUD APIs
-* 📁 File Upload Support
-* 🗃️ SQLAlchemy ORM with Alembic Migrations
-* 📧 Email Notifications (OTP / Verification / Reset)
-* ⚡ Redis Cache Server Integration
-* 🔐 Authentication & Authorization (JWT-based)
-* 🔑 Change Password & Forgot Password Flow
-* 🛡️ Rate Limiting using SlowAPI
-* 📊 Structured Logging with Loguru
-* 🧩 Modular and Scalable Project Structure
-* 📑 Standardized API Responses & Validation Schemas
+* Poetry for Dependency Management
+* User CRUD APIs
+* File Upload Support
+* SQLAlchemy ORM with Alembic Migrations
+* Email Notifications (OTP / Verification / Reset)
+* Redis Cache Server Integration
+* Authentication & Authorization (JWT-based)
+* Change Password & Forgot Password Flow
+* Rate Limiting using SlowAPI
+* Structured Logging with Loguru
+* Modular and Scalable Project Structure
+* Standardized API Responses & Validation Schemas
 * Unit testing with coverage (pytest)
 
 ---
@@ -176,6 +176,28 @@ poetry run test --cov
 ```
 
 ---
+## 🐳 Docker Setup
+
+### Build Docker Image
+```bash
+docker build -t fastapi-auth .
+```
+
+### Run Container
+```bash
+docker run -p 8000:8000 fastapi-auth
+```
+
+### Alembic Migration Inside Docker
+```bash
+docker exec -it fastapi-auth alembic upgrade head
+```
+
+### (Or) Run Compose
+```bash
+docker compose up --build
+```
+---
 
 ## 🔐 Authentication Flow
 
@@ -205,6 +227,7 @@ poetry run test --cov
 * Get User by ID
 * Update User
 * Delete User
+* Upload avatar
 
 ---
 
